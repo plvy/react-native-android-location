@@ -32,10 +32,6 @@ public class RNALocationModule extends ReactContextBaseJavaModule{
         super(reactContext);
         // Save Context for later use
         mReactContext = reactContext;
-
-        LocationManager locationManager = (LocationManager) mReactContext.getSystemService(Context.LOCATION_SERVICE);
-        mLastLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-
     }
 
 
@@ -49,6 +45,9 @@ public class RNALocationModule extends ReactContextBaseJavaModule{
      */
     @ReactMethod
     public void getLocation() {
+        LocationManager locationManager = (LocationManager) mReactContext.getSystemService(Context.LOCATION_SERVICE);
+        mLastLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        
         if (mLastLocation != null) {
             try {
                 double Longitude;
