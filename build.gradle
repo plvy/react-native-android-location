@@ -13,5 +13,6 @@ android {
 }
 
 dependencies {
-    compile 'com.facebook.react:react-native:0.11.+'
+    compile group: 'io.nlopez.smartlocation', name: 'library', version: '3.3.3'
+    compile 'com.facebook.react:react-native:+'
 }

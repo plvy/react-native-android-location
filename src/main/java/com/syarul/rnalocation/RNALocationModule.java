@@ -1,11 +1,8 @@
 package com.syarul.rnalocation;
 
-import android.location.Location;
-import android.location.LocationManager;
 import android.content.Context;
-import android.support.annotation.Nullable;
+import android.location.Location;
 import android.util.Log;
-
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContext;
@@ -13,6 +10,12 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
+import io.nlopez.smartlocation.OnLocationUpdatedListener;
+import io.nlopez.smartlocation.SmartLocation;
+import io.nlopez.smartlocation.location.LocationProvider;
+import io.nlopez.smartlocation.location.config.LocationParams;
+import io.nlopez.smartlocation.location.providers.MultiFallbackProvider;
+import io.nlopez.smartlocation.utils.Logger;
 
 public class RNALocationModule extends ReactContextBaseJavaModule{
 
@@ -20,8 +23,8 @@ public class RNALocationModule extends ReactContextBaseJavaModule{
     public static final String REACT_CLASS = "RNALocation";
     // Unique Name for Log TAG
     public static final String TAG = RNALocationModule.class.getSimpleName();
-    // Save last Location Provided
-    private Location mLastLocation;
+    public static final int ONE_MINUTE = 1000 * 60;
+    private boolean started;
 
     //The React Native Context
     ReactApplicationContext mReactContext;
@@ -45,44 +48,78 @@ public class RNALocationModule extends ReactContextBaseJavaModule{
      */
     @ReactMethod
     public void getLocation() {
-        LocationManager locationManager = (LocationManager) mReactContext.getSystemService(Context.LOCATION_SERVICE);
-        mLastLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-        
-        if (mLastLocation != null) {
-            try {
-                double Longitude;
-                double Latitude;
+        final long now = System.currentTimeMillis();
+        Log.w(TAG, "getLocation called");
 
-                // Receive Longitude / Latitude from (updated) Last Location
-                Longitude = mLastLocation.getLongitude();
-                Latitude = mLastLocation.getLatitude();
+        if(!started) {
+            LocationProvider fallbackProvider = new MultiFallbackProvider.Builder()
+                .withGooglePlayServicesProvider().withProvider(new NullLocationProvider()).build();
+            SmartLocation.with(mReactContext).location(fallbackProvider)
+                .start(new OnLocationUpdatedListener() {
 
-                Log.i(TAG, "Got new location. Lng: " +Longitude+" Lat: "+Latitude);
-
-                // Create Map with Parameters to send to JS
-                WritableMap params = Arguments.createMap();
-                params.putDouble("Longitude", Longitude);
-                params.putDouble("Latitude", Latitude);
-
-                // Send Event to JS to update Location
-                sendEvent(mReactContext, "updateLocation", params);
-            } catch (Exception e) {
-                e.printStackTrace();
-                Log.i(TAG, "Location services disconnected.");
-            }
+                    @Override
+                    public void onLocationUpdated(Location location) {
+                        Log.w(TAG, "onLocationUpdated called");
+                        started = true;
+                        sendEvent(mReactContext, location);
+                    }
+                });
         }
     }
 
     /*
      * Internal function for communicating with JS
      */
-    private void sendEvent(ReactContext reactContext, String eventName, @Nullable WritableMap params) {
+    private void sendEvent(ReactContext reactContext, Location location) {
+        Log.w(TAG, "about to send location update event");
+
+        double longitude;
+        double latitude;
+
+        if(location==null) {
+            longitude = 0;
+            latitude =0;
+            Log.e(TAG, "location is null, using (0,0)");
+        } else {
+            longitude = location.getLongitude();
+            latitude = location.getLatitude();
+            Log.i(TAG, "Got new location. Lng: " + longitude + " Lat: " + latitude);
+        }
+
+
+        // Create Map with Parameters to send to JS
+        WritableMap params = Arguments.createMap();
+        params.putDouble("Longitude", longitude);
+        params.putDouble("Latitude", latitude);
+
         if (reactContext.hasActiveCatalystInstance()) {
             reactContext
-                    .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                    .emit(eventName, params);
+                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                .emit("updateLocation", params);
         } else {
-            Log.i(TAG, "Waiting for CatalystInstance...");
+            Log.e(TAG, "Waiting for CatalystInstance...");
         }
     }
+
+    private static class NullLocationProvider implements LocationProvider{
+        @Override
+        public void init(Context context, Logger logger) {
+
+        }
+
+        @Override
+        public void start(OnLocationUpdatedListener onLocationUpdatedListener, LocationParams locationParams, boolean b) {
+
+        }
+
+        @Override
+        public void stop() {
+
+        }
+
+        @Override
+        public Location getLastLocation() {
+            return null;
+        }
+    };
 }
