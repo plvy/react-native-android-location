@@ -49,7 +49,7 @@ public class RNALocationModule extends ReactContextBaseJavaModule {
      */
     @ReactMethod
     public void getLocation() {
-        Log.w(TAG, "getLocation called");
+        Log.d(TAG, "getLocation called");
         if (!started) {
             started = true;
             LocationProvider fallbackProvider = new MultiFallbackProvider.Builder()
@@ -59,7 +59,7 @@ public class RNALocationModule extends ReactContextBaseJavaModule {
 
                     @Override
                     public void onLocationUpdated(Location location) {
-                        Log.w(TAG, "onLocationUpdated called");
+                        Log.d(TAG, "onLocationUpdated called");
                         lastLocation = location;
                         sendEvent(mReactContext, location);
                     }
@@ -73,7 +73,7 @@ public class RNALocationModule extends ReactContextBaseJavaModule {
      * Internal function for communicating with JS
      */
     private void sendEvent(ReactContext reactContext, Location location) {
-        Log.w(TAG, "about to send location update event");
+        Log.d(TAG, "about to send location update event");
 
         double longitude;
         double latitude;
@@ -81,11 +81,11 @@ public class RNALocationModule extends ReactContextBaseJavaModule {
         if (location == null) {
             longitude = 0;
             latitude = 0;
-            Log.e(TAG, "location is null, using (0,0)");
+            Log.w(TAG, "location is null, using (0,0)");
         } else {
             longitude = location.getLongitude();
             latitude = location.getLatitude();
-            Log.i(TAG, "Got new location. Lng: " + longitude + " Lat: " + latitude);
+            Log.d(TAG, "Got new location. Lng: " + longitude + " Lat: " + latitude);
         }
 
 
@@ -99,7 +99,7 @@ public class RNALocationModule extends ReactContextBaseJavaModule {
                 .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                 .emit("updateLocation", params);
         } else {
-            Log.e(TAG, "Waiting for CatalystInstance...");
+            Log.e(TAG, "CatalystInstance is not active, cannot send updateLocation!");
         }
     }
 
@@ -112,20 +112,18 @@ public class RNALocationModule extends ReactContextBaseJavaModule {
         @Override
         public void start(OnLocationUpdatedListener onLocationUpdatedListener, LocationParams locationParams,
             boolean b) {
-
+            Log.d(TAG, "NullLocationProvider started");
         }
 
         @Override
         public void stop() {
-
+            Log.d(TAG, "NullLocationProvider stopped");
         }
 
         @Override
         public Location getLastLocation() {
+            Log.w(TAG, "NullLocationProvider called");
             return null;
         }
     }
-
-
-    ;
 }
