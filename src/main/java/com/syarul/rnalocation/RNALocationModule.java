@@ -17,7 +17,7 @@ import io.nlopez.smartlocation.location.config.LocationParams;
 import io.nlopez.smartlocation.location.providers.MultiFallbackProvider;
 import io.nlopez.smartlocation.utils.Logger;
 
-public class RNALocationModule extends ReactContextBaseJavaModule{
+public class RNALocationModule extends ReactContextBaseJavaModule {
 
     // React Class Name as called from JS
     public static final String REACT_CLASS = "RNALocation";
@@ -29,6 +29,7 @@ public class RNALocationModule extends ReactContextBaseJavaModule{
     //The React Native Context
     ReactApplicationContext mReactContext;
 
+    private Location lastLocation;
 
     // Constructor Method as called in Package
     public RNALocationModule(ReactApplicationContext reactContext) {
@@ -48,10 +49,9 @@ public class RNALocationModule extends ReactContextBaseJavaModule{
      */
     @ReactMethod
     public void getLocation() {
-        final long now = System.currentTimeMillis();
         Log.w(TAG, "getLocation called");
-
-        if(!started) {
+        if (!started) {
+            started = true;
             LocationProvider fallbackProvider = new MultiFallbackProvider.Builder()
                 .withGooglePlayServicesProvider().withProvider(new NullLocationProvider()).build();
             SmartLocation.with(mReactContext).location(fallbackProvider)
@@ -60,10 +60,11 @@ public class RNALocationModule extends ReactContextBaseJavaModule{
                     @Override
                     public void onLocationUpdated(Location location) {
                         Log.w(TAG, "onLocationUpdated called");
-                        started = true;
                         sendEvent(mReactContext, location);
                     }
                 });
+        } else {
+            sendEvent(mReactContext, location);
         }
     }
 
@@ -76,9 +77,9 @@ public class RNALocationModule extends ReactContextBaseJavaModule{
         double longitude;
         double latitude;
 
-        if(location==null) {
+        if (location == null) {
             longitude = 0;
-            latitude =0;
+            latitude = 0;
             Log.e(TAG, "location is null, using (0,0)");
         } else {
             longitude = location.getLongitude();
@@ -101,14 +102,15 @@ public class RNALocationModule extends ReactContextBaseJavaModule{
         }
     }
 
-    private static class NullLocationProvider implements LocationProvider{
+    private static class NullLocationProvider implements LocationProvider {
         @Override
         public void init(Context context, Logger logger) {
 
         }
 
         @Override
-        public void start(OnLocationUpdatedListener onLocationUpdatedListener, LocationParams locationParams, boolean b) {
+        public void start(OnLocationUpdatedListener onLocationUpdatedListener, LocationParams locationParams,
+            boolean b) {
 
         }
 
@@ -121,5 +123,8 @@ public class RNALocationModule extends ReactContextBaseJavaModule{
         public Location getLastLocation() {
             return null;
         }
-    };
+    }
+
+
+    ;
 }
