@@ -60,11 +60,12 @@ public class RNALocationModule extends ReactContextBaseJavaModule {
                     @Override
                     public void onLocationUpdated(Location location) {
                         Log.w(TAG, "onLocationUpdated called");
+                        lastLocation = location;
                         sendEvent(mReactContext, location);
                     }
                 });
         } else {
-            sendEvent(mReactContext, location);
+            sendEvent(mReactContext, lastLocation);
         }
     }
 
