@@ -31,6 +31,8 @@ public class RNALocationModule extends ReactContextBaseJavaModule {
 
     private Location lastLocation;
 
+    private static Boolean emulator;
+
     // Constructor Method as called in Package
     public RNALocationModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -44,28 +46,54 @@ public class RNALocationModule extends ReactContextBaseJavaModule {
         return REACT_CLASS;
     }
 
-    /*
+    private boolean isEmulator() {
+        if(emulator==null) {
+            emulator = Build.FINGERPRINT.startsWith("generic")
+                || Build.FINGERPRINT.startsWith("unknown")
+                || Build.MODEL.contains("google_sdk")
+                || Build.MODEL.contains("Emulator")
+                || Build.MODEL.contains("Android SDK built for x86")
+                || Build.MANUFACTURER.contains("Genymotion")
+                || (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic"))
+                || "google_sdk".equals(Build.PRODUCT);
+        }
+        return emulator;
+    }
+
+    /**
      * Location Callback as called by JS
      */
     @ReactMethod
     public void getLocation() {
         Log.d(TAG, "getLocation called");
-        if (!started) {
-            started = true;
-            LocationProvider fallbackProvider = new MultiFallbackProvider.Builder()
-                .withGooglePlayServicesProvider().withProvider(new NullLocationProvider()).build();
-            SmartLocation.with(mReactContext).location(fallbackProvider)
-                .start(new OnLocationUpdatedListener() {
 
-                    @Override
-                    public void onLocationUpdated(Location location) {
-                        Log.d(TAG, "onLocationUpdated called");
-                        lastLocation = location;
-                        sendEvent(mReactContext, location);
-                    }
-                });
-        } else {
+        if(isEmulator()) {
+            lastLocation=new Location("plvy");
+            // berlin: 52.489383,13.391627
+            lastLocation.setLatitude(52.489383d);
+            lastLocation.setLongitude(13.391627d);
+            // phnom penh: 11.540572,104.9124968
+            // lastLocation.setLatitude(11.540572d);
+            // lastLocation.setLongitude(104.9124968d);
             sendEvent(mReactContext, lastLocation);
+        } else {
+            if (!started) {
+                started = true;
+                LocationProvider fallbackProvider = new MultiFallbackProvider.Builder()
+                    .withGooglePlayServicesProvider().withProvider(new NullLocationProvider()).build();
+                SmartLocation.with(mReactContext).location(fallbackProvider)
+                    .start(new OnLocationUpdatedListener() {
+
+                        @Override
+                        public void onLocationUpdated(Location location) {
+                            Log.d(TAG, "onLocationUpdated called");
+                            lastLocation = location;
+                            sendEvent(mReactContext, location);
+                        }
+                    });
+            } else {
+                sendEvent(mReactContext, lastLocation);
+            }
         }
     }
 
