@@ -2,6 +2,7 @@ package com.syarul.rnalocation;
 
 import android.content.Context;
 import android.location.Location;
+import android.os.Build;
 import android.util.Log;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -25,13 +26,12 @@ public class RNALocationModule extends ReactContextBaseJavaModule {
     public static final String TAG = RNALocationModule.class.getSimpleName();
     public static final int ONE_MINUTE = 1000 * 60;
     private boolean started;
+    private static Boolean emulator;
 
     //The React Native Context
     ReactApplicationContext mReactContext;
 
     private Location lastLocation;
-
-    private static Boolean emulator;
 
     // Constructor Method as called in Package
     public RNALocationModule(ReactApplicationContext reactContext) {
@@ -45,6 +45,8 @@ public class RNALocationModule extends ReactContextBaseJavaModule {
     public String getName() {
         return REACT_CLASS;
     }
+
+
 
     private boolean isEmulator() {
         if(emulator==null) {
